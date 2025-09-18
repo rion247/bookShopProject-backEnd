@@ -36,4 +36,47 @@ const changeUserStatus = catchAsync(async (req, res) => {
   });
 });
 
-export const UserController = { createUser, changeUserStatus };
+const getAllUser = catchAsync(async (req, res) => {
+  const result = await UserService.getAllUserFromDB();
+
+  sendResponse(res, {
+    statusCode: status.OK,
+    success: true,
+    message: 'Users are retrieved successfully!!!',
+    data: result,
+  });
+});
+
+const getSingleUser = catchAsync(async (req, res) => {
+  const { email } = req.params;
+
+  const result = await UserService.getSingleUserFromDB(email);
+
+  sendResponse(res, {
+    statusCode: status.OK,
+    success: true,
+    message: 'User is retrieved successfully!!!',
+    data: result,
+  });
+});
+
+const getMe = catchAsync(async (req, res) => {
+  const { userEmail } = req.user;
+
+  const result = await UserService.getMeFromDB(userEmail);
+
+  sendResponse(res, {
+    statusCode: status.OK,
+    success: true,
+    message: 'User is retrieved successfully!!!',
+    data: result,
+  });
+});
+
+export const UserController = {
+  createUser,
+  changeUserStatus,
+  getAllUser,
+  getSingleUser,
+  getMe,
+};

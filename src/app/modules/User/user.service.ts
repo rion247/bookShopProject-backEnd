@@ -58,7 +58,26 @@ const changeUserStatusIntoDB = async (email: string, status: TUser) => {
   return result;
 };
 
+const getAllUserFromDB = async () => {
+  const result = await User.find({ role: 'user' });
+  return result;
+};
+
+const getSingleUserFromDB = async (email: string) => {
+  const result = await User.findOne({ email });
+  return result;
+};
+
+const getMeFromDB = async (email: string) => {
+  const result = await User.findOne({ email });
+
+  return result;
+};
+
 export const UserService = {
   createUserIntoDB,
   changeUserStatusIntoDB,
+  getAllUserFromDB,
+  getSingleUserFromDB,
+  getMeFromDB,
 };
