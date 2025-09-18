@@ -40,6 +40,13 @@ const auth = (...requiredRoles: TUser_Role[]) => {
       throw new AppError(status.NOT_FOUND, 'Sorry! This user is not found!!!');
     }
 
+    if (userData?.status === 'deactive') {
+      throw new AppError(
+        status.BAD_REQUEST,
+        'Sorry! This user is already deactivated!!!',
+      );
+    }
+
     if (requiredRoles && !requiredRoles.includes(role)) {
       throw new AppError(
         status.UNAUTHORIZED,

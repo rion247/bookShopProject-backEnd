@@ -48,6 +48,17 @@ const createUserIntoDB = async (password: string, userData: TUser) => {
   return { createUser, accessToken, refreshToken };
 };
 
+const changeUserStatusIntoDB = async (email: string, status: TUser) => {
+  const result = await User.findOneAndUpdate(
+    { email },
+    { status },
+    { new: true },
+  );
+
+  return result;
+};
+
 export const UserService = {
   createUserIntoDB,
+  changeUserStatusIntoDB,
 };

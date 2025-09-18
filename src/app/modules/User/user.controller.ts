@@ -22,4 +22,18 @@ const createUser = catchAsync(async (req, res) => {
   });
 });
 
-export const UserController = { createUser };
+const changeUserStatus = catchAsync(async (req, res) => {
+  const { status: userStatus } = req.body;
+  const { email } = req.params;
+
+  const result = await UserService.changeUserStatusIntoDB(email, userStatus);
+
+  sendResponse(res, {
+    statusCode: status.OK,
+    success: true,
+    message: 'User Status is changed successfully!!!',
+    data: result,
+  });
+});
+
+export const UserController = { createUser, changeUserStatus };

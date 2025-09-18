@@ -6,6 +6,7 @@ export interface TUser {
   email: string;
   password: string;
   role: 'admin' | 'user';
+  status: 'active' | 'deactive';
 }
 
 export type TuserInformationForJWT = {
