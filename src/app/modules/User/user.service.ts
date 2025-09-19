@@ -17,6 +17,7 @@ const createUserIntoDB = async (password: string, userData: TUser) => {
   const modifiedUserData = {
     ...userData,
     password: password || (config.default_password as string),
+    role: 'user',
   };
 
   const createUser = await User.create(modifiedUserData);

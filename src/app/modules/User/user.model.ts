@@ -2,6 +2,7 @@ import { model, Schema } from 'mongoose';
 import { TUser, UserModel } from './user.interface';
 import bcrypt from 'bcrypt';
 import config from '../../config';
+import { UserRoleForEnum, UserStatus } from './user.constant';
 
 const userSchema = new Schema<TUser, UserModel>(
   {
@@ -18,10 +19,17 @@ const userSchema = new Schema<TUser, UserModel>(
     },
     role: {
       type: String,
-      default: 'user',
+      enum: {
+        values: [...UserRoleForEnum],
+        message: '{VALUE} is not supported',
+      },
     },
     status: {
       type: String,
+      enum: {
+        values: [...UserStatus],
+        message: '{VALUE} is not supported',
+      },
       default: 'active',
     },
   },
