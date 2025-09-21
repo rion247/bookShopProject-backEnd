@@ -22,6 +22,13 @@ router.patch(
   UserController.changeUserStatus,
 );
 
+router.patch(
+  '/:email',
+  auth(USER_ROLE.user),
+  validateRequest(userValidationSchemas.updateUserProfileValidationSchema),
+  UserController.updateUserProfile,
+);
+
 router.get('/:email', auth(USER_ROLE.admin), UserController.getSingleUser);
 
 router.get(

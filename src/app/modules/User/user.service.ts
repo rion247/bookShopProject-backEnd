@@ -75,10 +75,40 @@ const getMeFromDB = async (email: string) => {
   return result;
 };
 
+const updateUserProfileIntoDB = async (
+  userEmail: string,
+  payload: Partial<TUser>,
+) => {
+  const userData = await User.isUserExist(userEmail);
+
+  if (!userData) {
+    throw new AppError(status.NOT_FOUND, 'Sorry! This user is not found!!!');
+  }
+
+  if (userData?.status === 'deactive') {
+    throw new AppError(
+      status.BAD_REQUEST,
+      'Sorry! This user is already deactivated!!!',
+    );
+  }
+
+  const email = userData?.email;
+  const name = payload?.name;
+
+  const result = await User.findOneAndUpdate(
+    { email },
+    { name },
+    { new: true, runValidators: true },
+  );
+
+  return result;
+};
+
 export const UserService = {
   createUserIntoDB,
   changeUserStatusIntoDB,
   getAllUserFromDB,
   getSingleUserFromDB,
   getMeFromDB,
+  updateUserProfileIntoDB,
 };

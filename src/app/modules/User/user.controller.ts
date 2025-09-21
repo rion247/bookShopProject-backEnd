@@ -73,10 +73,28 @@ const getMe = catchAsync(async (req, res) => {
   });
 });
 
+const updateUserProfile = catchAsync(async (req, res) => {
+  const { email } = req.params;
+  const updateInformation = req.body;
+
+  const result = await UserService.updateUserProfileIntoDB(
+    email,
+    updateInformation,
+  );
+
+  sendResponse(res, {
+    statusCode: status.OK,
+    success: true,
+    message: 'User information updated successfully!!!',
+    data: result,
+  });
+});
+
 export const UserController = {
   createUser,
   changeUserStatus,
   getAllUser,
   getSingleUser,
   getMe,
+  updateUserProfile,
 };

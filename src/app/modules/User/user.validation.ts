@@ -22,7 +22,28 @@ const userStatusChangeValidationSchema = z.object({
   }),
 });
 
+const updateUserProfileValidationSchema = z.object({
+  body: z
+    .object({
+      name: z.string({ message: 'User Name is required' }),
+    })
+    .strict()
+    .superRefine((val, ctx) => {
+      const allowedKeys = ['name'];
+      Object.keys(val).forEach((key) => {
+        if (!allowedKeys.includes(key)) {
+          ctx.addIssue({
+            code: 'custom',
+            message: 'Only name can be updated. Other fields are not allowed.',
+            path: [key],
+          });
+        }
+      });
+    }),
+});
+
 export const userValidationSchemas = {
   userValidationSchemaforCreate,
   userStatusChangeValidationSchema,
+  updateUserProfileValidationSchema,
 };
