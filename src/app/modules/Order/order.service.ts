@@ -6,6 +6,8 @@ import { TOrder } from './order.interface';
 import { Order } from './order.model';
 import { Product } from '../Product/product.model';
 import mongoose from 'mongoose';
+import QueryBuilder from '../../builder/QueryBuilder';
+import { orderStatusObject, searchAbleField } from './order.constant';
 
 const createOrderIntoDB = async (payload: TOrder) => {
   const userId = payload?.user;
@@ -55,7 +57,6 @@ const createOrderIntoDB = async (payload: TOrder) => {
 
     const modifiedData = {
       ...payload,
-      paymentStatus: 'pending',
       orderStatus: 'processing',
       totalPrice,
     };
@@ -96,43 +97,93 @@ const createOrderIntoDB = async (payload: TOrder) => {
   }
 };
 
-// const updateProductInformationIntoDB = async (
-//   id: string,
-//   payload: Partial<TProduct>,
-// ) => {
-//   const result = await Product.findByIdAndUpdate(
-//     id,
-//     { ...payload },
-//     { new: true, runValidators: true },
-//   );
+const updateOrderInformationIntoDB = async (
+  id: string,
+  payload: Partial<TOrder>,
+) => {
+  const orderData = await Order.findById(id);
 
-//   return result;
-// };
+  if (!orderData) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Order not found!');
+  }
 
-// const getAllProductFromDB = async (query: Record<string, unknown>) => {
-//   const productQuery = new QueryBuilder(Product.find(), query)
-//     .search(searchAbleField)
-//     .filter()
-//     .sort()
-//     .paginate()
-//     .fields();
+  const orderStatus = orderData?.orderStatus;
+  const updateRequestOrderStatus = payload?.orderStatus;
 
-//   const result = await productQuery.modelQuery;
-//   const meta = await productQuery.countTotal();
-//   return { result, meta };
-// };
+  if (orderStatus === orderStatusObject.cancelled) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      `Sorry!!! This Order is already ${orderStatus}!`,
+    );
+  }
 
-// const getSingleProductFromDB = async (id: string) => {
-//   const result = await Product.findById(id);
-//   return result;
-// };
+  if (
+    orderStatus === orderStatusObject.completed &&
+    updateRequestOrderStatus === orderStatusObject.processing
+  ) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      `Sorry!!! Order status can not update from ${orderStatus} to ${updateRequestOrderStatus}!`,
+    );
+  }
 
-// const deleteSingleProductFromDB = async (id: string) => {
-//   const result = await Product.findByIdAndDelete(id);
+  const result = await Order.findByIdAndUpdate(
+    id,
+    { orderStatus: updateRequestOrderStatus },
+    { new: true, runValidators: true },
+  );
 
-//   return result;
-// };
+  return result;
+};
+
+const getAllOrderFromDB = async (query: Record<string, unknown>) => {
+  const orderQuery = new QueryBuilder(
+    Order.find().populate('user product'),
+    query,
+  )
+    .search(searchAbleField)
+    .filter()
+    .sort()
+    .paginate()
+    .fields();
+
+  const result = await orderQuery.modelQuery;
+  const meta = await orderQuery.countTotal();
+  return { result, meta };
+};
+
+const getSingleOrderFromDB = async (id: string) => {
+  const result = await Order.findById(id).populate('user product');
+  return result;
+};
+
+const getMyOrderFromDB = async (email: string) => {
+  const userData = await User.findOne({ email });
+
+  const userId = userData?._id;
+
+  if (!userData) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      'Sorry! This user is not found!!!',
+    );
+  }
+
+  if (userData?.status === 'deactive') {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Sorry! This user is already deactivated!!!',
+    );
+  }
+
+  const result = await Order.find({ user: userId }).populate('user product');
+  return result;
+};
 
 export const OrderService = {
   createOrderIntoDB,
+  getAllOrderFromDB,
+  getSingleOrderFromDB,
+  updateOrderInformationIntoDB,
+  getMyOrderFromDB,
 };

@@ -14,63 +14,67 @@ const createOrder = catchAsync(async (req, res) => {
   });
 });
 
-// const updateProductInformation = catchAsync(async (req, res) => {
-//   const { id } = req.params;
-//   const updateData = req.body;
+const updateOrderStatus = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const orderStatusUpdateData = req.body;
 
-//   const result = await ProductService.updateProductInformationIntoDB(
-//     id,
-//     updateData,
-//   );
+  const result = await OrderService.updateOrderInformationIntoDB(
+    id,
+    orderStatusUpdateData,
+  );
 
-//   sendResponse(res, {
-//     statusCode: status.OK,
-//     success: true,
-//     message: 'Book updated successfully!!!',
-//     data: result,
-//   });
-// });
+  sendResponse(res, {
+    statusCode: status.OK,
+    success: true,
+    message: 'Order status updated successfully!!!',
+    data: result,
+  });
+});
 
-// const getAllProduct = catchAsync(async (req, res) => {
-//   const query = req.query;
+const getAllOrder = catchAsync(async (req, res) => {
+  const query = req.query;
 
-//   const result = await ProductService.getAllProductFromDB(query);
+  const result = await OrderService.getAllOrderFromDB(query);
 
-//   sendResponse(res, {
-//     statusCode: status.OK,
-//     success: true,
-//     message: 'Books retrieved successfully!!!',
-//     data: result?.result,
-//     meta: result?.meta,
-//   });
-// });
+  sendResponse(res, {
+    statusCode: status.OK,
+    success: true,
+    message: 'Orders retrieved successfully!!!',
+    data: result?.result,
+    meta: result?.meta,
+  });
+});
 
-// const getSingleProduct = catchAsync(async (req, res) => {
-//   const { id } = req.params;
+const getSingleOrder = catchAsync(async (req, res) => {
+  const { id } = req.params;
 
-//   const result = await ProductService.getSingleProductFromDB(id);
+  const result = await OrderService.getSingleOrderFromDB(id);
 
-//   sendResponse(res, {
-//     statusCode: status.OK,
-//     success: true,
-//     message: 'Book retrieved successfully!!!',
-//     data: result,
-//   });
-// });
+  sendResponse(res, {
+    statusCode: status.OK,
+    success: true,
+    message: 'Order retrieved successfully!!!',
+    data: result,
+  });
+});
 
-// const deleteSingleProduct = catchAsync(async (req, res) => {
-//   const { id } = req.params;
+const getMyOrder = catchAsync(async (req, res) => {
+  const { userEmail } = req.user;
 
-//   const result = await ProductService.deleteSingleProductFromDB(id);
+  const result = await OrderService.getMyOrderFromDB(userEmail);
 
-//   sendResponse(res, {
-//     statusCode: status.OK,
-//     success: true,
-//     message: 'Book deleted successfully!!!',
-//     data: result,
-//   });
-// });
+  sendResponse(res, {
+    statusCode: status.OK,
+    success: true,
+    message: 'Order retrieved successfully!!!',
+    data: result,
+  });
+});
 
 export const OrderController = {
   createOrder,
+  getAllOrder,
+  getSingleOrder,
+  updateOrderStatus,
+  getMyOrder,
 };
