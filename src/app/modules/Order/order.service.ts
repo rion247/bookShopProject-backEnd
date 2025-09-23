@@ -8,12 +8,15 @@ import { Product } from '../Product/product.model';
 import mongoose from 'mongoose';
 import QueryBuilder from '../../builder/QueryBuilder';
 import { orderStatusObject, searchAbleField } from './order.constant';
+import { OrderUtils } from './order.utils';
 
-const createOrderIntoDB = async (payload: TOrder) => {
-  const userId = payload?.user;
+const createOrderIntoDB = async (
+  email: string,
+  payload: TOrder,
+  client_ip: string,
+) => {
+  const userData = await User.findOne({ email });
   const productId = payload?.product;
-
-  const userData = await User.findById(userId);
 
   if (!userData) {
     throw new AppError(
@@ -28,6 +31,8 @@ const createOrderIntoDB = async (payload: TOrder) => {
       'Sorry! This user is already deactivated!!!',
     );
   }
+
+  const user = userData?._id;
 
   const productData = await Product.findById(productId);
 
@@ -57,6 +62,7 @@ const createOrderIntoDB = async (payload: TOrder) => {
 
     const modifiedData = {
       ...payload,
+      user,
       orderStatus: 'processing',
       totalPrice,
     };
@@ -67,6 +73,34 @@ const createOrderIntoDB = async (payload: TOrder) => {
       throw new AppError(
         httpStatus.BAD_REQUEST,
         'Failed to create order. Please try again!',
+      );
+    }
+
+    //shujopay
+    const shurjoPayPayload = {
+      amount: totalPrice,
+      order_id: createOrder[0]?._id,
+      currency: 'BDT',
+      customer_name: userData?.name,
+      customer_address: 'N/A',
+      customer_email: userData?.email,
+      customer_phone: 'N/A',
+      customer_city: 'N/A',
+      client_ip,
+    };
+
+    const payment = await OrderUtils.makePaymentAsync(shurjoPayPayload);
+
+    if (payment?.transactionStatus) {
+      await Order.findByIdAndUpdate(
+        createOrder[0]?._id,
+        {
+          transactionInfo: {
+            id: payment.sp_order_id,
+            transactionStatus: payment.transactionStatus,
+          },
+        },
+        { session, new: true, runValidators: true },
       );
     }
 
@@ -89,7 +123,7 @@ const createOrderIntoDB = async (payload: TOrder) => {
     await session.commitTransaction();
     await session.endSession();
 
-    return createOrder;
+    return payment.checkout_url;
   } catch (err: any) {
     await session.abortTransaction();
     await session.endSession();
@@ -180,10 +214,43 @@ const getMyOrderFromDB = async (email: string) => {
   return result;
 };
 
+const verifyPayment = async (order_id: string) => {
+  const verifiedPaymentData = await OrderUtils.verifyPaymentAsync(order_id);
+
+  if (verifiedPaymentData.length) {
+    const result = await Order.findOneAndUpdate(
+      {
+        'transactionInfo.id': order_id,
+      },
+      {
+        'transactionInfo.bank_status': verifiedPaymentData[0]?.bank_status,
+        'transactionInfo.sp_code': verifiedPaymentData[0]?.sp_code,
+        'transactionInfo.sp_message': verifiedPaymentData[0]?.sp_message,
+        'transactionInfo.method': verifiedPaymentData[0]?.method,
+        'transactionInfo.date_time': verifiedPaymentData[0]?.date_time,
+        paymentStatus:
+          verifiedPaymentData[0].bank_status == 'Success'
+            ? 'paid'
+            : verifiedPaymentData[0].bank_status == 'Failed'
+              ? 'pending'
+              : verifiedPaymentData[0].bank_status == 'Cancel'
+                ? 'failed'
+                : 'pending',
+      },
+      { new: true, runValidators: true },
+    );
+
+    return result;
+  }
+
+  return verifiedPaymentData;
+};
+
 export const OrderService = {
   createOrderIntoDB,
   getAllOrderFromDB,
   getSingleOrderFromDB,
   updateOrderInformationIntoDB,
   getMyOrderFromDB,
+  verifyPayment,
 };

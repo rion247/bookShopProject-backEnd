@@ -22,6 +22,15 @@ const orderSchema = new Schema<TOrder>(
       type: Number,
       required: [true, 'Total Price is required!!!'],
     },
+    transactionInfo: {
+      id: String,
+      transactionStatus: String,
+      bank_status: String,
+      sp_code: String,
+      sp_message: String,
+      method: String,
+      date_time: String,
+    },
     paymentStatus: {
       type: String,
       enum: {

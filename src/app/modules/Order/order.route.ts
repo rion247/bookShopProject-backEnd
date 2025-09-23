@@ -9,6 +9,12 @@ const router = Router();
 
 router.get('/my-order', auth(USER_ROLE.user), OrderController.getMyOrder);
 
+router.get(
+  '/verify-payment',
+  auth(USER_ROLE.user),
+  OrderController.verifyPayment,
+);
+
 router.post(
   '/create-order',
   auth(USER_ROLE.user),

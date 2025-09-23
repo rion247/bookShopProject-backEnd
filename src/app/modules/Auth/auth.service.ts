@@ -4,7 +4,7 @@ import { TChangeUserPassword, TLoginUser } from './auth.interface';
 import { User } from '../User/user.model';
 import AppError from '../../errors/AppError';
 import { TuserInformationForJWT } from '../User/user.interface';
-import { tokenGenerator } from './auth.utils';
+import { tokenGenerator, verifyToken } from './auth.utils';
 import config from '../../config';
 import bcrypt from 'bcrypt';
 
@@ -92,7 +92,40 @@ const changeUserPasswordInToDB = async (
   return null;
 };
 
+const refreshTokenInToDB = async (token: string) => {
+  const decoded = verifyToken(token, config.jwt_refresh_secret as string);
+
+  const { userEmail } = decoded;
+
+  const userData = await User.isUserExist(userEmail);
+
+  if (!userData) {
+    throw new AppError(status.NOT_FOUND, 'Sorry! This user is not found!!!');
+  }
+
+  if (userData?.status === 'deactive') {
+    throw new AppError(
+      status.BAD_REQUEST,
+      'Sorry! This user is already deactivated!!!',
+    );
+  }
+
+  const userInformationForJWT: TuserInformationForJWT = {
+    userEmail: userData?.email,
+    role: userData?.role,
+  };
+
+  const accessToken = tokenGenerator(
+    userInformationForJWT,
+    config.jwt_access_secret as string,
+    config.jwt_access_expires_in as SignOptions['expiresIn'],
+  );
+
+  return { accessToken };
+};
+
 export const AuthService = {
   loginUserIntoDB,
   changeUserPasswordInToDB,
+  refreshTokenInToDB,
 };

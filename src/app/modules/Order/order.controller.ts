@@ -4,7 +4,15 @@ import catchAsync from '../../utils/catchAsync';
 import { OrderService } from './order.service';
 
 const createOrder = catchAsync(async (req, res) => {
-  const result = await OrderService.createOrderIntoDB(req.body);
+  const { userEmail } = req.user;
+
+  const orderInformation = req.body;
+
+  const result = await OrderService.createOrderIntoDB(
+    userEmail,
+    orderInformation,
+    req.ip!,
+  );
 
   sendResponse(res, {
     statusCode: status.OK,
@@ -71,10 +79,24 @@ const getMyOrder = catchAsync(async (req, res) => {
   });
 });
 
+const verifyPayment = catchAsync(async (req, res) => {
+  const { order_id } = req.query;
+
+  const order = await OrderService.verifyPayment(order_id as string);
+
+  sendResponse(res, {
+    statusCode: status.OK,
+    success: true,
+    message: 'Order retrieved successfully!!!',
+    data: order,
+  });
+});
+
 export const OrderController = {
   createOrder,
   getAllOrder,
   getSingleOrder,
   updateOrderStatus,
   getMyOrder,
+  verifyPayment,
 };
