@@ -23,7 +23,16 @@ const productValidationSchemaforUpdate = z.object({
       quantity: z.number().optional(),
       image: z.string().optional(),
     })
-    .strict(),
+    .loose()
+    .superRefine((data, ctx) => {
+      if ('status' in data) {
+        ctx.addIssue({
+          path: ['status'],
+          code: 'custom',
+          message: 'status cannot be updated.',
+        });
+      }
+    }),
 });
 
 export const productValidationSchemas = {
