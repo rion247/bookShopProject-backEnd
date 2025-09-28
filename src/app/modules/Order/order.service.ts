@@ -40,6 +40,10 @@ const createOrderIntoDB = async (
     throw new AppError(httpStatus.NOT_FOUND, 'Product not found!');
   }
 
+  if (productData?.status === 'out-of-stock') {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Not enough stock!');
+  }
+
   const productQuantity = productData?.quantity;
   const orderQuantity = payload?.orderQuantity;
 

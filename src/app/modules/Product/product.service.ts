@@ -1,4 +1,4 @@
-import status from 'http-status';
+import { default as httpStatus } from 'http-status';
 import { TProduct } from './product.interface';
 import { Product } from './product.model';
 import AppError from '../../errors/AppError';
@@ -10,16 +10,18 @@ const createProductIntoDB = async (payload: TProduct) => {
     await Product.findOne({ title: payload?.title, author: payload?.author })
   ) {
     throw new AppError(
-      status.BAD_REQUEST,
+      httpStatus.BAD_REQUEST,
       'Sorry!!! This product already exist!!!',
     );
   }
 
-  const createProduct = await Product.create(payload);
+  const modifiedData = { ...payload, status: 'available' };
+
+  const createProduct = await Product.create(modifiedData);
 
   if (!createProduct) {
     throw new AppError(
-      status.INTERNAL_SERVER_ERROR,
+      httpStatus.INTERNAL_SERVER_ERROR,
       'Failed to create product. Please try again!',
     );
   }
@@ -31,9 +33,30 @@ const updateProductInformationIntoDB = async (
   id: string,
   payload: Partial<TProduct>,
 ) => {
+  if (!(await Product.isProductExist(id))) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Product not found!');
+  }
+
   const result = await Product.findByIdAndUpdate(
     id,
     { ...payload },
+    { new: true, runValidators: true },
+  );
+
+  if (!result) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Sorry! Update Process Failed!!!',
+    );
+  }
+
+  const productData = await Product.findById(result._id);
+
+  const productId = productData?._id;
+
+  await Product.findByIdAndUpdate(
+    productId,
+    { status: productData?.quantity !== 0 ? 'available' : 'out-of-stock' },
     { new: true, runValidators: true },
   );
 

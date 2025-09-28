@@ -3,6 +3,7 @@ import { Model } from 'mongoose';
 
 export interface TProduct {
   title: string;
+  description: string;
   author: string;
   category: string;
   price: number;
