@@ -165,6 +165,16 @@ const updateOrderInformationIntoDB = async (
     );
   }
 
+  if (
+    orderStatus === orderStatusObject.completed &&
+    updateRequestOrderStatus === orderStatusObject.cancelled
+  ) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      `Sorry!!! Order status can not update from ${orderStatus} to ${updateRequestOrderStatus}!`,
+    );
+  }
+
   const result = await Order.findByIdAndUpdate(
     id,
     { orderStatus: updateRequestOrderStatus },

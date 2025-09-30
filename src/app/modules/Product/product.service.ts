@@ -82,6 +82,10 @@ const getSingleProductFromDB = async (id: string) => {
 };
 
 const deleteSingleProductFromDB = async (id: string) => {
+  if (!(await Product.isProductExist(id))) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Product not found!');
+  }
+
   const result = await Product.findByIdAndDelete(id);
 
   return result;

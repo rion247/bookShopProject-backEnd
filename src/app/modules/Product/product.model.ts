@@ -11,7 +11,6 @@ const productSchema = new Schema<TProduct, ProductModel>(
     },
     description: {
       type: String,
-      unique: true,
       required: [true, 'Book Description is required!!!'],
     },
     author: {
