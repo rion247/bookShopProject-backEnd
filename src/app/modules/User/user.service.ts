@@ -4,12 +4,12 @@ import AppError from '../../errors/AppError';
 import { tokenGenerator } from '../Auth/auth.utils';
 import { TUser, TuserInformationForJWT } from './user.interface';
 import { User } from './user.model';
-import { status } from 'http-status';
+import { default as httpStatus } from 'http-status';
 
 const createUserIntoDB = async (password: string, userData: TUser) => {
   if (await User.isUserExist(userData?.email)) {
     throw new AppError(
-      status.BAD_REQUEST,
+      httpStatus.BAD_REQUEST,
       'Sorry!!! This user already exist!!!',
     );
   }
@@ -24,7 +24,7 @@ const createUserIntoDB = async (password: string, userData: TUser) => {
 
   if (!createUser) {
     throw new AppError(
-      status.INTERNAL_SERVER_ERROR,
+      httpStatus.INTERNAL_SERVER_ERROR,
       'Failed to create user. Please try again!',
     );
   }
@@ -50,9 +50,51 @@ const createUserIntoDB = async (password: string, userData: TUser) => {
 };
 
 const changeUserStatusIntoDB = async (email: string, status: TUser) => {
+  const userData = await User.isUserExist(email);
+
+  if (!userData) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      'Sorry! This user is not found!!!',
+    );
+  }
+
+  if (userData?.role === 'admin') {
+    throw new AppError(
+      httpStatus.UNAUTHORIZED,
+      'Sorry!!! You are not authorized!!!',
+    );
+  }
+
   const result = await User.findOneAndUpdate(
     { email },
     { status },
+    { new: true },
+  );
+
+  return result;
+};
+
+const changeUserRoleIntoDB = async (email: string, role: string) => {
+  const userData = await User.isUserExist(email);
+
+  if (!userData) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      'Sorry! This user is not found!!!',
+    );
+  }
+
+  if (userData?.role === 'admin') {
+    throw new AppError(
+      httpStatus.UNAUTHORIZED,
+      'Sorry!!! You are not authorized!!!',
+    );
+  }
+
+  const result = await User.findOneAndUpdate(
+    { email },
+    { role },
     { new: true },
   );
 
@@ -82,12 +124,15 @@ const updateUserProfileIntoDB = async (
   const userData = await User.isUserExist(userEmail);
 
   if (!userData) {
-    throw new AppError(status.NOT_FOUND, 'Sorry! This user is not found!!!');
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      'Sorry! This user is not found!!!',
+    );
   }
 
   if (userData?.status === 'deactive') {
     throw new AppError(
-      status.BAD_REQUEST,
+      httpStatus.BAD_REQUEST,
       'Sorry! This user is already deactivated!!!',
     );
   }
@@ -111,4 +156,5 @@ export const UserService = {
   getSingleUserFromDB,
   getMeFromDB,
   updateUserProfileIntoDB,
+  changeUserRoleIntoDB,
 };

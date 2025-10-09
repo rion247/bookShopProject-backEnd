@@ -61,7 +61,6 @@ const createOrderIntoDB = async (
   try {
     session.startTransaction();
 
-    const newProductQuantity = productQuantity - orderQuantity;
     const totalPrice = orderQuantity * unitProductPrice;
 
     const modifiedData = {
@@ -105,22 +104,6 @@ const createOrderIntoDB = async (
           },
         },
         { session, new: true, runValidators: true },
-      );
-    }
-
-    const updateProductInformationIntoDB = await Product.findByIdAndUpdate(
-      productId,
-      {
-        quantity: newProductQuantity,
-        status: newProductQuantity === 0 ? 'out-of-stock' : productData?.status,
-      },
-      { session, new: true, runValidators: true },
-    );
-
-    if (!updateProductInformationIntoDB) {
-      throw new AppError(
-        httpStatus.BAD_REQUEST,
-        'Failed to create order. Please try again!',
       );
     }
 
@@ -232,6 +215,8 @@ const verifyPayment = async (order_id: string) => {
   const verifiedPaymentData = await OrderUtils.verifyPaymentAsync(order_id);
 
   if (verifiedPaymentData.length) {
+    const verifiedInfo = verifiedPaymentData[0];
+
     const result = await Order.findOneAndUpdate(
       {
         'transactionInfo.id': order_id,
@@ -253,6 +238,43 @@ const verifyPayment = async (order_id: string) => {
       },
       { new: true, runValidators: true },
     );
+
+    //
+    if (verifiedInfo.bank_status === 'Success' && result?.product) {
+      const productId = result?.product._id;
+      const orderQuantity = result?.orderQuantity;
+
+      const productData = await Product.findById(productId);
+      if (!productData) {
+        throw new AppError(httpStatus.NOT_FOUND, 'Product not found!');
+      }
+
+      const newProductQuantity = productData?.quantity - orderQuantity;
+
+      if (newProductQuantity < 0) {
+        throw new AppError(
+          httpStatus.BAD_REQUEST,
+          'Invalid stock quantity update!',
+        );
+      }
+
+      const updateProductInformationIntoDB = await Product.findByIdAndUpdate(
+        productId,
+        {
+          quantity: newProductQuantity,
+          status:
+            newProductQuantity === 0 ? 'out-of-stock' : productData.status,
+        },
+        { new: true, runValidators: true },
+      );
+
+      if (!updateProductInformationIntoDB) {
+        throw new AppError(
+          httpStatus.BAD_REQUEST,
+          'Failed to update product after payment!',
+        );
+      }
+    }
 
     return result;
   }

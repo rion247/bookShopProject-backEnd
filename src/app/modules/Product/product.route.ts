@@ -27,8 +27,8 @@ router.delete(
   ProductController.deleteSingleProduct,
 );
 
-router.get('/:id', auth(USER_ROLE.admin), ProductController.getSingleProduct);
+router.get('/:id', ProductController.getSingleProduct);
 
-router.get('/', auth(USER_ROLE.admin), ProductController.getAllProduct);
+router.get('/', ProductController.getAllProduct);
 
 export const ProductRoutes = router;

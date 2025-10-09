@@ -36,6 +36,20 @@ const changeUserStatus = catchAsync(async (req, res) => {
   });
 });
 
+const changeUserRole = catchAsync(async (req, res) => {
+  const { role: userRole } = req.body;
+  const { email } = req.params;
+
+  const result = await UserService.changeUserRoleIntoDB(email, userRole);
+
+  sendResponse(res, {
+    statusCode: status.OK,
+    success: true,
+    message: 'User Role changed successfully!!!',
+    data: result,
+  });
+});
+
 const getAllUser = catchAsync(async (req, res) => {
   const result = await UserService.getAllUserFromDB();
 
@@ -97,4 +111,5 @@ export const UserController = {
   getSingleUser,
   getMe,
   updateUserProfile,
+  changeUserRole,
 };

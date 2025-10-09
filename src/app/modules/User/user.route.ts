@@ -23,6 +23,13 @@ router.patch(
 );
 
 router.patch(
+  '/change-role/:email',
+  auth(USER_ROLE.admin),
+  validateRequest(userValidationSchemas.userRoleChangeValidationSchema),
+  UserController.changeUserRole,
+);
+
+router.patch(
   '/:email',
   auth(USER_ROLE.user),
   validateRequest(userValidationSchemas.updateUserProfileValidationSchema),
